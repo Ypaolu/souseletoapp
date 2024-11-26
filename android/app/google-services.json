@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "41668405235",
+    "project_id": "souseleto-33d19",
+    "storage_bucket": "souseleto-33d19.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41668405235:android:cf1745902c568d114cd486",
+        "android_client_info": {
+          "package_name": "com.example.souseleto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtFdeIlTWpDnZjyP4piAxfSqNxHk53kn4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41668405235:android:1a2b69fe75694aee4cd486",
+        "android_client_info": {
+          "package_name": "com.example.souseletoapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtFdeIlTWpDnZjyP4piAxfSqNxHk53kn4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
