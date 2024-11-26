@@ -168,7 +168,7 @@ class _Selecao_de_subState extends State<Selecao_de_sub> {
                             ? Colors.green
                             : Color(0xFFD9D9D9),
                         child: Text(
-                          'MATUTINO',
+                          'MATUTINOO',
                           style: TextStyle(
                             color: Colors.black,
                             fontSize: 20,
