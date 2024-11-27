@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 
+import '../home.dart';
+import '../info_user.dart';
+
 class RealizarConvocacao extends StatefulWidget {
   final User user;
   final String SubTurno;
@@ -191,6 +194,7 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                 child: Text('NÃO HÁ ALUNOS CADASTRADOS PARA ESSE SUB'))
                 : Column(
               children: [
+                SizedBox(height: 10),
                 Text(
                   "INFORMAÇÕES DA CONVOCAÇÃO",
                   style: TextStyle(
@@ -408,6 +412,14 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                     ),
                     SizedBox(height: 20),
                     Container(
+                      child: Text('Alunos',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),),
+                    ),
+                    Container(
                       width: double.infinity,
                       height: 1,
                       color: Colors.black,
@@ -552,9 +564,7 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                                                               BorderRadius.circular(5),
                                                             ),
                                                           ),
-                                                          SizedBox(
-                                                              width:
-                                                              10),
+                                                          SizedBox(width: 10),
                                                           Text(
                                                             'Data: ${DateFormat('dd/MM/yyyy HH:mm').format(dataChamada)}',
                                                             style: TextStyle(
@@ -634,7 +644,7 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
         ),
       ),
       bottomNavigationBar: Container(
-        height: 60,
+        height: 80,
         child: BottomAppBar(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -643,27 +653,27 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                icon: Icon(
-                  Icons.reply,
-                  color: Colors.black,
-                  size: 30,
-                ),
+                icon: Icon(Icons.reply, color: Colors.black, size: 30),
               ),
               IconButton(
-                onPressed: () {},
-                icon: Icon(
-                  Icons.home,
-                  color: Colors.black,
-                  size: 30,
-                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Selecao_de_sub(user: widget.user),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.home, color: Colors.black, size: 30),
               ),
               IconButton(
-                onPressed: () {},
-                icon: Icon(
-                  Icons.person,
-                  color: Colors.black,
-                  size: 30,
-                ),
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => InfoUser(user: widget.user)));
+                },
+                icon: Icon(Icons.person, color: Colors.black, size: 30),
               ),
             ],
           ),

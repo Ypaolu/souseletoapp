@@ -1,7 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_multi_formatter/formatters/currency_input_formatter.dart';
+import 'package:flutter_multi_formatter/formatters/money_input_enums.dart';
 import 'package:intl/intl.dart';
+
+import '../home.dart';
+import '../info_user.dart';
 
 class EditarConvocacao extends StatefulWidget {
   final User user;
@@ -37,17 +42,42 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
     carregarConvocacao(); // Carregar os dados da convocação ao iniciar
   }
 
+  Future<void> carregarAlunos() async {
+    try {
+      var alunosSnapshot = await FirebaseFirestore.instance.collection('Alunos').get();
+      var listaAlunos = alunosSnapshot.docs.map((doc) {
+        return {
+          'ID': doc.id,
+          'NomeAluno': doc['NomeAluno'], // Certifique-se de que este é o nome do campo correto no Firestore.
+        };
+      }).toList();
+
+      setState(() {
+        alunos = listaAlunos;
+        alunosCarregados = true;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erro ao carregar alunos: $e")),
+      );
+    }
+  }
+
   Future<void> carregarConvocacao() async {
     try {
+      // Carregar dados da convocação
       var chamadaSnapshot = await FirebaseFirestore.instance
           .collection('Convocacoes')
-          .doc(widget.docId)  // ID do documento da convocação
+          .doc(widget.docId)
           .get();
 
       var chamadaData = chamadaSnapshot.data();
       if (chamadaData != null) {
+        // Carregar os alunos antes
+        await carregarAlunos();
+
         setState(() {
-          // Preenchendo os campos com os dados da convocação
+          // Preencher os campos básicos
           profRespcontroller.text = chamadaData['ProfResp'] ?? '';
           taxacontroller.text = chamadaData['Taxa'] ?? '';
           localcontroller.text = chamadaData['Local'] ?? '';
@@ -59,22 +89,29 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
           selectedTime = TimeOfDay.fromDateTime(selectedDate!);
           horarioJogocontroller.text = DateFormat('HH:mm').format(selectedDate!);
 
-          // Convocados como lista de nomes dos alunos (strings)
+          // Identificar alunos convocados
           var convocadosData = chamadaData['Convocados'] ?? [];
-
           if (convocadosData is List) {
-            alunos = alunos.where((aluno) {
-              return convocadosData.contains(aluno['NomeAluno']);
-            }).toList();
-          }
+            // Verificar quais alunos foram convocados
+            selectedAlunos = alunos
+                .where((aluno) => convocadosData.contains(aluno['NomeAluno']))
+                .map((aluno) => aluno['ID'] as String)
+                .toList();
 
-          // Marcando os alunos convocados
-          selectedAlunos = alunos.map((aluno) => aluno['ID'] as String).toList();
+            // Reorganizar a lista de alunos: convocados primeiro
+            alunos.sort((a, b) {
+              bool aConvocado = selectedAlunos.contains(a['ID']);
+              bool bConvocado = selectedAlunos.contains(b['ID']);
+              if (aConvocado && !bConvocado) return -1; // Aluno A vem antes
+              if (!aConvocado && bConvocado) return 1;  // Aluno B vem depois
+              return 0; // Ordem original se ambos forem ou não forem convocados
+            });
+          }
         });
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erro ao carregar dados: $e")),
+        SnackBar(content: Text("Erro ao carregar convocação: $e")),
       );
     }
   }
@@ -175,60 +212,394 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Editar Convocação'),
+        automaticallyImplyLeading: false,
+        title: Image.asset(
+          'assets/escudo.png',
+          width: 80,
+          height: 80,
+        ),
+        toolbarHeight: 100,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black, Colors.green],
+              stops: [0.5, 0.5],
+            ),
+          ),
+        ),
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         child: Column(
-          children: [
-            alunosCarregados
-                ? alunos.isEmpty
-                ? Center(child: Text('Não há alunos para editar'))
-                : Column(
-              children: [
-                // Campos de edição
-                TextField(
-                  controller: profRespcontroller,
-                  decoration: InputDecoration(labelText: 'Professor Responsável'),
-                ),
-                TextField(
-                  controller: taxacontroller,
-                  decoration: InputDecoration(labelText: 'Taxa de Jogo'),
-                ),
-                TextField(
-                  controller: localcontroller,
-                  decoration: InputDecoration(labelText: 'Local do Jogo'),
-                ),
-                TextField(
-                  controller: enderecocontroller,
-                  decoration: InputDecoration(labelText: 'Endereço'),
-                ),
-                GestureDetector(
-                  onTap: () => _mostrarCalendarioPersonalizado(context),
-                  child: TextField(
-                    controller: dataJogocontroller,
-                    decoration: InputDecoration(labelText: 'Data do Jogo'),
-                    enabled: false,
+            children: [
+        alunosCarregados
+        ? alunos.isEmpty
+        ? Center(
+        child: Text('NÃO HÁ ALUNOS CADASTRADOS PARA ESSE SUB'))
+          : Column(
+    children: [
+      SizedBox(height: 10),
+    Text(
+    "INFORMAÇÕES DA CONVOCAÇÃO",
+      style: TextStyle(
+        color: Colors.black,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    SizedBox(height: 10),
+    Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+    // Seção de Data
+    Column(
+    children: [
+    Text("Data",
+    style: TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.bold)),
+    GestureDetector(
+    onTap: () =>
+    _mostrarCalendarioPersonalizado(
+    context),
+    child: Container(
+    decoration: BoxDecoration(
+    borderRadius:
+    BorderRadius.circular(10),
+    color: Colors.grey[300]),
+    width: 120,
+    height: 60,
+    child: Center(
+    child: Text(
+    dataJogocontroller.text.isEmpty
+    ? 'dd/mm/aaaa'
+        : dataJogocontroller.text,
+    style: TextStyle(fontSize: 16),
+    ),
+    ),
+    ),
+    ),
+    ],
+    ),
+    SizedBox(width: 20),
+    Column(
+    children: [
+    Text("Horário",
+    style: TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.bold)),
+    GestureDetector(
+    onTap: () =>
+    _mostrarHorarioPersonalizado(context),
+    child: Container(
+    decoration: BoxDecoration(
+    borderRadius:
+    BorderRadius.circular(10),
+    color: Colors.grey[300]),
+    width: 120,
+    height: 60,
+    child: Center(
+    child: Text(
+    horarioJogocontroller.text.isEmpty
+    ? 'hh:mm'
+        : horarioJogocontroller.text,
+    style: TextStyle(fontSize: 16),
+    ),
+    ),
+    ),
+    ),
+    ],
+    ),
+    SizedBox(width: 20),
+    Column(
+    children: [
+    Container(
+    child: Text(
+    "Taxa de jogo",
+    style: TextStyle(
+    color: Colors.black,
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
+    ),
+    ),
+    ),
+    Container(
+    width: 120,
+    height: 60,
+    decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(10),
+    color: Colors.grey[300],
+    ),
+    child: TextFormField(
+    controller: taxacontroller,
+    keyboardType: TextInputType.number,
+    inputFormatters: [
+    CurrencyInputFormatter(
+    leadingSymbol: 'R\$ ',
+    thousandSeparator:
+    ThousandSeparator.Period,
+    mantissaLength:
+    2, // duas casas decimais
+    ),
+    ],
+    decoration: InputDecoration(
+    contentPadding:
+    EdgeInsets.symmetric(vertical: 18),
+    border: InputBorder.none,
+    ),
+    style: TextStyle(fontSize: 15),
+    textAlign: TextAlign.center,
+    ),
+    ),
+    SizedBox(width: 15),
+    ],
+    ),
+    ],
+    ),
+    SizedBox(height: 20),
+    // Campo de Professor Responsável
+    Column(
+    children: [
+    Container(
+    child: Text(
+    "Professor Responsável",
+    style: TextStyle(
+    color: Colors.black,
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
+    ),
+    ),
+    ),
+    Container(
+    width: 400,
+    height: 60,
+    decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(10),
+    color: Colors.grey[300],
+    ),
+    child: TextFormField(
+    controller: profRespcontroller,
+    decoration: InputDecoration(
+    contentPadding:
+    EdgeInsets.symmetric(vertical: 18),
+    border: InputBorder.none,
+    ),
+    style: TextStyle(fontSize: 15),
+    textAlign: TextAlign.center,
+    ),
+    ),
+    SizedBox(height: 15),
+    ],
+    ),
+    Column(
+    children: [
+    Container(
+    child: Text(
+    "Local do Jogo",
+    style: TextStyle(
+    color: Colors.black,
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
+    ),
+    ),
+    ),
+    Container(
+    width: 400,
+    height: 60,
+    decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(10),
+    color: Colors.grey[300],
+    ),
+    child: TextFormField(
+    controller: localcontroller,
+    decoration: InputDecoration(
+    contentPadding:
+    EdgeInsets.symmetric(vertical: 18),
+    border: InputBorder.none,
+    ),
+    style: TextStyle(fontSize: 15),
+    textAlign: TextAlign.center,
+    ),
+    ),
+    SizedBox(height: 15),
+    ],
+    ),
+    Column(
+    children: [
+    Container(
+    child: Text(
+    "Endereço do jogo",
+    style: TextStyle(
+    color: Colors.black,
+    fontSize: 15,
+    fontWeight: FontWeight.bold,
+    ),
+    ),
+    ),
+    Container(
+    width: 400,
+    height: 60,
+    decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(10),
+    color: Colors.grey[300],
+    ),
+    child: TextFormField(
+    controller: enderecocontroller,
+    decoration: InputDecoration(
+    contentPadding:
+    EdgeInsets.symmetric(vertical: 18),
+    border: InputBorder.none,
+    ),
+    style: TextStyle(fontSize: 15),
+    textAlign: TextAlign.center,
+    ),
+    ),
+    SizedBox(height: 20),
+      Container(
+        child: Text('Alunos',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),),
+      ),
+    Container(
+    width: double.infinity,
+    height: 1,
+    color: Colors.black,
+    ),
+     ]),
+      ListView.builder(
+        shrinkWrap: true,
+        itemCount: alunos.length,
+        physics: NeverScrollableScrollPhysics(), // Impede a rolagem do ListView.builder
+        itemBuilder: (context, index) {
+          var aluno = alunos[index];
+          return Column(
+            children: [
+              GestureDetector(
+                onTap: () {},
+                child: Container(
+                  color: Colors.grey[300],
+                  child: ListTile(
+                    title: Text(aluno['NomeAluno']),
+                    trailing: Checkbox(
+                      value: selectedAlunos.contains(aluno['ID']),
+                      onChanged: (bool? selected) {
+                        setState(() {
+                          if (selected == true) {
+                            selectedAlunos.add(aluno['ID']);
+                          } else {
+                            selectedAlunos.remove(aluno['ID']);
+                          }
+                        });
+                      },
+                      activeColor: Colors.green,
+                    ),
                   ),
                 ),
-                GestureDetector(
-                  onTap: () => _mostrarHorarioPersonalizado(context),
-                  child: TextField(
-                    controller: horarioJogocontroller,
-                    decoration: InputDecoration(labelText: 'Horário do Jogo'),
-                    enabled: false,
-                  ),
+              ),
+              // Linha de separação
+              if (index != alunos.length - 1) // Impede que a linha apareça após o último aluno
+                Container(
+                  width: double.infinity,
+                  height: 1,
+                  color: Colors.black,
                 ),
-                // Botão de salvar
+            ],
+          );
+        },
+      ),
+      Container(
+        width: double.infinity,
+        height: 1,
+        color: Colors.black,
+      ),
+      SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () {if (selectedDate != null &&
+                      selectedTime != null &&
+                      profRespcontroller.text.isNotEmpty &&
+                      taxacontroller.text.isNotEmpty &&
+                      localcontroller.text.isNotEmpty &&
+                      enderecocontroller.text.isNotEmpty) {
                     uploadData(alunos);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            "CONVOCAÇÃO EDITADA COM SUCESSO!",
+                            style:
+                            TextStyle(color: Colors.white)),
+                        backgroundColor: Colors.green,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            "PREENCHA TODOS OS CAMPOS!",
+                            style:
+                            TextStyle(color: Colors.white)),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
                   },
-                  child: Text('Salvar'),
+                  child: Text('SALVAR',
+                  style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
                 ),
-              ],
+                ),
+                SizedBox(height: 20),],
             )
                 : CircularProgressIndicator(),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        height: 80,
+        child: BottomAppBar(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: Icon(Icons.reply, color: Colors.black, size: 30),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Selecao_de_sub(user: widget.user),
+                    ),
+                  );
+                },
+                icon: Icon(Icons.home, color: Colors.black, size: 30),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => InfoUser(user: widget.user)));
+                },
+                icon: Icon(Icons.person, color: Colors.black, size: 30),
+              ),
+            ],
+          ),
+          color: Color.fromARGB(255, 57, 177, 61),
         ),
       ),
     );

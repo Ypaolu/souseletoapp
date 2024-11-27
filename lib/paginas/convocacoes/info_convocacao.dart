@@ -83,11 +83,11 @@ class _InfoConvocacaoState extends State<InfoConvocacao> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
               .collection('Convocacoes')
               .doc(widget.docId)
-              .get(),
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
@@ -129,7 +129,6 @@ class _InfoConvocacaoState extends State<InfoConvocacao> {
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(width: 15),
                         IconButton(
                           onPressed: () {
                             Navigator.push(
@@ -223,7 +222,7 @@ class _InfoConvocacaoState extends State<InfoConvocacao> {
                     Column(
                       children: [
                         Text(
-                          'Jogadores',
+                          'CONVOCADOS',
                           style: TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
