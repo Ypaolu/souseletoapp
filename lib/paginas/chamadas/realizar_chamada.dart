@@ -70,8 +70,8 @@ class _RealizarChamadaState extends State<RealizarChamada> {
         'NomeAluno': presencas,
         'Sub': widget.SubTurno,
         'DataChamada': selectedDate != null
-            ? DateFormat('dd-MM-yyyy').format(selectedDate!)
-            : null, // Formato de data
+            ? Timestamp.fromDate(selectedDate!) // Salva como Timestamp
+            : null,
       };
 
       await DatabaseMethods().addChamada(uploaddata);
@@ -93,6 +93,7 @@ class _RealizarChamadaState extends State<RealizarChamada> {
       );
     }
   }
+
 
   // Função para selecionar a data
   Future<void> _mostrarCalendarioPersonalizado(BuildContext context) async {

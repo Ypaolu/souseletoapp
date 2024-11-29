@@ -195,7 +195,9 @@ class _ListaChamadasState extends State<ListaChamadas> {
   Widget build(BuildContext context) {
     // Definindo o intervalo de data para o mês e ano especificado
     DateTime startDate = DateTime(widget.year, widget.month, 1);
-    DateTime endDate = DateTime(widget.year, widget.month + 1, 1);
+    DateTime endDate =
+    (widget.month == 12) ? DateTime(widget.year + 1, 1, 1) : DateTime(widget.year, widget.month + 1, 1);
+
 
     return Scaffold(
       appBar: AppBar(
