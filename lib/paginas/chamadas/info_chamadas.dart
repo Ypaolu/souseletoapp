@@ -26,6 +26,30 @@ class _InfoChamadasState extends State<InfoChamadas> {
     return formattedDate;
   }
 
+  Future<void> _mostrarJustificativaPopup(BuildContext context, Map<String, dynamic> aluno) async {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Justificativa de Falta"),
+          content: Text(
+            '${aluno['Justificativa'] ?? "Sem justificativa"}',
+            style: TextStyle(fontSize: 18),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Fecha o pop-up
+              },
+              child: Text("Fechar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,11 +74,11 @@ class _InfoChamadasState extends State<InfoChamadas> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        child: FutureBuilder<DocumentSnapshot>(
-          future: FirebaseFirestore.instance
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance
               .collection('Chamadas')
               .doc(widget.docId)
-              .get(),
+              .snapshots(), // Usando 'snapshots()' para escutar alterações em tempo real
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(child: CircularProgressIndicator());
@@ -66,86 +90,93 @@ class _InfoChamadasState extends State<InfoChamadas> {
               final data = snapshot.data!.data() as Map<String, dynamic>;
 
               // Acessando a lista de alunos
-              List<dynamic> alunos = data['NomeAluno'] ?? [];
+              List<dynamic> alunos = data['Alunos'] ?? [];
 
-              return Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${formatTimestamp(data['DataChamada'])}',
-                          style: TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(width: 20),
-                        IconButton(
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => EditarChamada(
-                                        docId: widget.docId, user: widget.user,
-                                      )));
-                            },
-                            icon: Icon(Icons.edit)),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: alunos.length,
-                      itemBuilder: (context, index) {
-                        final aluno = alunos[index];
-                        final nomeAluno = aluno['NomeAluno'];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '${formatTimestamp(data['DataChamada'])}',
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 20),
+                      IconButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => EditarChamada(
+                                      docId: widget.docId, user: widget.user
+                                    )));
+                          },
+                          icon: Icon(Icons.edit)),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: alunos.length,
+                    itemBuilder: (context, index) {
+                      final aluno = alunos[index];
+                      final nomeAluno = aluno['NomeAluno'];
+                      final presente = aluno['Presente'];
+                      final justificativa = aluno['Justificativa']; // Justificativa, se houver
 
-                        return Column(
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 1,
-                              color: Colors.black,
-                            ),
-                            Container(
-                              color: Colors.grey[300],
-                              child: ListTile(
-                                title: Text(
-                                  nomeAluno,
-                                  style: TextStyle(fontSize: 18),
-                                ),
-                                trailing: Container(
+                      return Column(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 1,
+                            color: Colors.black,
+                          ),
+                          Container(
+                            color: Colors.grey[300],
+                            child: ListTile(
+                              title: Text(
+                                nomeAluno,
+                                style: TextStyle(fontSize: 18),
+                              ),
+                              subtitle: presente == 'Justificado'
+                                  ? Text(
+                                '$justificativa',
+                                style: TextStyle(color: Colors.black),
+                              )
+                                  : null, // Exibe a justificativa se estiver justificado
+                              trailing: Container(
                                   alignment: Alignment.center,
                                   width: 25,
                                   height: 25,
                                   decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.black,
-                                        width: 2,
-                                      ),
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: aluno['Presente']
-                                          ? Colors.transparent
-                                          : Colors.black),
+                                    border: Border.all(
+                                      color: Colors.black,
+                                      width: 2,
+                                    ),
+                                    borderRadius: BorderRadius.circular(5),
+                                    color: aluno['Presente'] == 'Presente'
+                                        ? Colors.green
+                                        : aluno['Presente'] == 'Ausente'
+                                        ? Colors.red
+                                        : Colors.yellow, //justificado
+                                  ),
                                 ),
                               ),
                             ),
-                            Container(
-                              width: double.infinity,
-                              height: 1,
-                              color: Colors.black,
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                    SizedBox(height: 20),
-
-                    // Aqui você pode adicionar outras informações da chamada, como notas, comentários, etc.
-                  ],
-                ),
+                          Container(
+                            width: double.infinity,
+                            height: 1,
+                            color: Colors.black,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  SizedBox(height: 20),
+                ],
               );
             }
           },

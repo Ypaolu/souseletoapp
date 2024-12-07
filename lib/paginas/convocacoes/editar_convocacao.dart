@@ -11,11 +11,13 @@ import '../info_user.dart';
 class EditarConvocacao extends StatefulWidget {
   final User user;
   final String docId;
+  final String SubTurno;
 
   const EditarConvocacao(
       {super.key,
         required this.docId,
-        required this.user});
+        required this.user,
+        required this.SubTurno});
 
   @override
   _EditarConvocacaoState createState() => _EditarConvocacaoState();
@@ -35,6 +37,11 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
   TextEditingController enderecocontroller = TextEditingController();
   TextEditingController dataJogocontroller = TextEditingController();
   TextEditingController horarioJogocontroller = TextEditingController();
+  String formatTimestamp(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    return formattedDate;
+  }
 
   @override
   void initState() {
@@ -233,291 +240,378 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
       ),
       body: SingleChildScrollView(
         child: Column(
-            children: [
-        alunosCarregados
-        ? alunos.isEmpty
-        ? Center(
-        child: Text('NÃO HÁ ALUNOS CADASTRADOS PARA ESSE SUB'))
-          : Column(
-    children: [
-      SizedBox(height: 10),
-    Text(
-    "INFORMAÇÕES DA CONVOCAÇÃO",
-      style: TextStyle(
-        color: Colors.black,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    SizedBox(height: 10),
-    Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-    // Seção de Data
-    Column(
-    children: [
-    Text("Data",
-    style: TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.bold)),
-    GestureDetector(
-    onTap: () =>
-    _mostrarCalendarioPersonalizado(
-    context),
-    child: Container(
-    decoration: BoxDecoration(
-    borderRadius:
-    BorderRadius.circular(10),
-    color: Colors.grey[300]),
-    width: 120,
-    height: 60,
-    child: Center(
-    child: Text(
-    dataJogocontroller.text.isEmpty
-    ? 'dd/mm/aaaa'
-        : dataJogocontroller.text,
-    style: TextStyle(fontSize: 16),
-    ),
-    ),
-    ),
-    ),
-    ],
-    ),
-    SizedBox(width: 20),
-    Column(
-    children: [
-    Text("Horário",
-    style: TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.bold)),
-    GestureDetector(
-    onTap: () =>
-    _mostrarHorarioPersonalizado(context),
-    child: Container(
-    decoration: BoxDecoration(
-    borderRadius:
-    BorderRadius.circular(10),
-    color: Colors.grey[300]),
-    width: 120,
-    height: 60,
-    child: Center(
-    child: Text(
-    horarioJogocontroller.text.isEmpty
-    ? 'hh:mm'
-        : horarioJogocontroller.text,
-    style: TextStyle(fontSize: 16),
-    ),
-    ),
-    ),
-    ),
-    ],
-    ),
-    SizedBox(width: 20),
-    Column(
-    children: [
-    Container(
-    child: Text(
-    "Taxa de jogo",
-    style: TextStyle(
-    color: Colors.black,
-    fontSize: 15,
-    fontWeight: FontWeight.bold,
-    ),
-    ),
-    ),
-    Container(
-    width: 120,
-    height: 60,
-    decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(10),
-    color: Colors.grey[300],
-    ),
-    child: TextFormField(
-    controller: taxacontroller,
-    keyboardType: TextInputType.number,
-    inputFormatters: [
-    CurrencyInputFormatter(
-    leadingSymbol: 'R\$ ',
-    thousandSeparator:
-    ThousandSeparator.Period,
-    mantissaLength:
-    2, // duas casas decimais
-    ),
-    ],
-    decoration: InputDecoration(
-    contentPadding:
-    EdgeInsets.symmetric(vertical: 18),
-    border: InputBorder.none,
-    ),
-    style: TextStyle(fontSize: 15),
-    textAlign: TextAlign.center,
-    ),
-    ),
-    SizedBox(width: 15),
-    ],
-    ),
-    ],
-    ),
-    SizedBox(height: 20),
-    // Campo de Professor Responsável
-    Column(
-    children: [
-    Container(
-    child: Text(
-    "Professor Responsável",
-    style: TextStyle(
-    color: Colors.black,
-    fontSize: 15,
-    fontWeight: FontWeight.bold,
-    ),
-    ),
-    ),
-    Container(
-    width: 400,
-    height: 60,
-    decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(10),
-    color: Colors.grey[300],
-    ),
-    child: TextFormField(
-    controller: profRespcontroller,
-    decoration: InputDecoration(
-    contentPadding:
-    EdgeInsets.symmetric(vertical: 18),
-    border: InputBorder.none,
-    ),
-    style: TextStyle(fontSize: 15),
-    textAlign: TextAlign.center,
-    ),
-    ),
-    SizedBox(height: 15),
-    ],
-    ),
-    Column(
-    children: [
-    Container(
-    child: Text(
-    "Local do Jogo",
-    style: TextStyle(
-    color: Colors.black,
-    fontSize: 15,
-    fontWeight: FontWeight.bold,
-    ),
-    ),
-    ),
-    Container(
-    width: 400,
-    height: 60,
-    decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(10),
-    color: Colors.grey[300],
-    ),
-    child: TextFormField(
-    controller: localcontroller,
-    decoration: InputDecoration(
-    contentPadding:
-    EdgeInsets.symmetric(vertical: 18),
-    border: InputBorder.none,
-    ),
-    style: TextStyle(fontSize: 15),
-    textAlign: TextAlign.center,
-    ),
-    ),
-    SizedBox(height: 15),
-    ],
-    ),
-    Column(
-    children: [
-    Container(
-    child: Text(
-    "Endereço do jogo",
-    style: TextStyle(
-    color: Colors.black,
-    fontSize: 15,
-    fontWeight: FontWeight.bold,
-    ),
-    ),
-    ),
-    Container(
-    width: 400,
-    height: 60,
-    decoration: BoxDecoration(
-    borderRadius: BorderRadius.circular(10),
-    color: Colors.grey[300],
-    ),
-    child: TextFormField(
-    controller: enderecocontroller,
-    decoration: InputDecoration(
-    contentPadding:
-    EdgeInsets.symmetric(vertical: 18),
-    border: InputBorder.none,
-    ),
-    style: TextStyle(fontSize: 15),
-    textAlign: TextAlign.center,
-    ),
-    ),
-    SizedBox(height: 20),
-      Container(
-        child: Text('Alunos',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-          ),),
-      ),
-    Container(
-    width: double.infinity,
-    height: 1,
-    color: Colors.black,
-    ),
-     ]),
-      ListView.builder(
-        shrinkWrap: true,
-        itemCount: alunos.length,
-        physics: NeverScrollableScrollPhysics(), // Impede a rolagem do ListView.builder
-        itemBuilder: (context, index) {
-          var aluno = alunos[index];
-          return Column(
-            children: [
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  color: Colors.grey[300],
-                  child: ListTile(
-                    title: Text(aluno['NomeAluno']),
-                    trailing: Checkbox(
-                      value: selectedAlunos.contains(aluno['ID']),
-                      onChanged: (bool? selected) {
-                        setState(() {
-                          if (selected == true) {
-                            selectedAlunos.add(aluno['ID']);
-                          } else {
-                            selectedAlunos.remove(aluno['ID']);
-                          }
-                        });
-                      },
-                      activeColor: Colors.green,
-                    ),
+          children: [
+            alunosCarregados
+                ? alunos.isEmpty
+                ? Center(
+                child: Text('NÃO HÁ ALUNOS CADASTRADOS PARA ESSE SUB'))
+                : Column(
+              children: [
+                SizedBox(height: 10),
+                Text(
+                  "INFORMAÇÕES DA CONVOCAÇÃO",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-              // Linha de separação
-              if (index != alunos.length - 1) // Impede que a linha apareça após o último aluno
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Seção de Data
+                    Column(
+                      children: [
+                        Text("Data",
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold)),
+                        GestureDetector(
+                          onTap: () =>
+                              _mostrarCalendarioPersonalizado(
+                                  context),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius:
+                                BorderRadius.circular(10),
+                                color: Colors.grey[300]),
+                            width: 120,
+                            height: 60,
+                            child: Center(
+                              child: Text(
+                                dataJogocontroller.text.isEmpty
+                                    ? 'dd/mm/aaaa'
+                                    : dataJogocontroller.text,
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(width: 20),
+                    Column(
+                      children: [
+                        Text("Horário",
+                            style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold)),
+                        GestureDetector(
+                          onTap: () =>
+                              _mostrarHorarioPersonalizado(context),
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius:
+                                BorderRadius.circular(10),
+                                color: Colors.grey[300]),
+                            width: 120,
+                            height: 60,
+                            child: Center(
+                              child: Text(
+                                horarioJogocontroller.text.isEmpty
+                                    ? 'hh:mm'
+                                    : horarioJogocontroller.text,
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(width: 20),
+                    Column(
+                      children: [
+                        Container(
+                          child: Text(
+                            "Taxa de jogo",
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: 120,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: Colors.grey[300],
+                          ),
+                          child: TextFormField(
+                            controller: taxacontroller,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              CurrencyInputFormatter(
+                                leadingSymbol: 'R\$ ',
+                                thousandSeparator:
+                                ThousandSeparator.Period,
+                                mantissaLength:
+                                2, // duas casas decimais
+                              ),
+                            ],
+                            decoration: InputDecoration(
+                              contentPadding:
+                              EdgeInsets.symmetric(vertical: 18),
+                              border: InputBorder.none,
+                            ),
+                            style: TextStyle(fontSize: 15),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        SizedBox(width: 15),
+                      ],
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
+                // Campo de Professor Responsável
+                Column(
+                  children: [
+                    Container(
+                      child: Text(
+                        "Professor Responsável",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 400,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.grey[300],
+                      ),
+                      child: TextFormField(
+                        controller: profRespcontroller,
+                        decoration: InputDecoration(
+                          contentPadding:
+                          EdgeInsets.symmetric(vertical: 18),
+                          border: InputBorder.none,
+                        ),
+                        style: TextStyle(fontSize: 15),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                  ],
+                ),
+                Column(
+                  children: [
+                    Container(
+                      child: Text(
+                        "Local do Jogo",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 400,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: Colors.grey[300],
+                      ),
+                      child: TextFormField(
+                        controller: localcontroller,
+                        decoration: InputDecoration(
+                          contentPadding:
+                          EdgeInsets.symmetric(vertical: 18),
+                          border: InputBorder.none,
+                        ),
+                        style: TextStyle(fontSize: 15),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    SizedBox(height: 15),
+                  ],
+                ),
+                Column(
+                    children: [
+                      Container(
+                        child: Text(
+                          "Endereço do jogo",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 400,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.grey[300],
+                        ),
+                        child: TextFormField(
+                          controller: enderecocontroller,
+                          decoration: InputDecoration(
+                            contentPadding:
+                            EdgeInsets.symmetric(vertical: 18),
+                            border: InputBorder.none,
+                          ),
+                          style: TextStyle(fontSize: 15),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Container(
+                        child: Text('Alunos',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),),
+                      ),
+                      Container(
+                        width: double.infinity,
+                        height: 1,
+                        color: Colors.black,
+                      ),
+                    ]),
+                Column(
+                  children: alunos.map((aluno) {
+                    String alunoNome = aluno['NomeAluno']; // Nome do aluno
+                    return Column(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              // Toggle the expanded state for the clicked student
+                              expandidos[alunoNome] = !(expandidos[alunoNome] ?? false);
+                            });
+                          },
+                          child: Container(
+                            color: Colors.grey[300],
+                            child: ListTile(
+                              title: Text(aluno['NomeAluno']),
+                              trailing: Checkbox(
+                                value: selectedAlunos.contains(aluno['ID']),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (value == true) {
+                                      selectedAlunos.add(aluno['ID']);
+                                    } else {
+                                      selectedAlunos.remove(aluno['ID']);
+                                    }
+                                  });
+                                },
+                                activeColor: Colors.green,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Container(
+                          width: double.infinity,
+                          height: 1,
+                          color: Colors.black,
+                        ),
+                        if (expandidos[alunoNome] == true)
+                          FutureBuilder<QuerySnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('Chamadas')
+                                .where('Sub', isEqualTo: widget.SubTurno)  // Filtra pelo SubTurno
+                                .orderBy('DataChamada', descending: true) // Ordena por data de chamada
+                                .limit(4) // Limita para as últimas 4 chamadas
+                                .get(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Center(child: CircularProgressIndicator());
+                              } else if (snapshot.hasError) {
+                                return Center(child: Text('Erro: ${snapshot.error}'));
+                              } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                                return Center(child: Text('Nenhuma chamada encontrada'));
+                              } else {
+                                return Container(
+                                  width: double.infinity,
+                                  height: 60,
+                                  color: Colors.grey[200],
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: snapshot.data!.docs.map<Widget>((chamadaDoc) {
+                                      var chamada = chamadaDoc.data() as Map<String, dynamic>;
+                                      List<dynamic> alunosChamadas = chamada['Alunos'] ?? [];
+
+                                      // Encontrar o aluno dentro da lista de alunos da chamada
+                                      var alunoPresente = alunosChamadas.firstWhere(
+                                            (alunoChamado) => alunoChamado['NomeAluno'] == aluno['NomeAluno'],
+                                        orElse: () => null,  // Retorna null se o aluno não for encontrado
+                                      );
+
+                                      // Se o aluno não estiver nessa chamada, não exibe nada
+                                      if (alunoPresente == null) {
+                                        return SizedBox();  // Retorna um widget vazio caso o aluno não esteja presente
+                                      }
+
+                                      // Defina a cor de acordo com o status de presença
+                                      Color statusColor;
+                                      String statusTexto = alunoPresente['Presente'];
+
+                                      if (statusTexto == 'Presente') {
+                                        statusColor = Colors.green;  // Verde para presente
+                                      } else if (statusTexto == 'Ausente') {
+                                        statusColor = Colors.red;    // Vermelho para ausente
+                                      } else if (statusTexto == 'Justificado') {
+                                        statusColor = Colors.yellow; // Amarelo para justificado
+                                        statusTexto = 'Justificado'; // Altere o texto para 'Justificado'
+                                      } else {
+                                        statusColor = Colors.grey;  // Cor padrão (caso nenhum valor seja definido)
+                                      }
+
+                                      // Exibe a data e presença do aluno
+                                      return Row(
+                                        children: [
+                                          Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Container(
+                                                alignment: Alignment.center,
+                                                width: 25,
+                                                height: 25,
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(
+                                                    color: Colors.black,
+                                                    width: 2,
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(5),
+                                                  color: statusColor, // Defina a cor baseada no status
+                                                ),
+                                              ),
+                                              // Exibe a data da chamada formatada
+                                              Text(
+                                                '${formatTimestamp(chamada['DataChamada'])}',
+                                                style: TextStyle(fontSize: 15),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(width: 15),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              }
+                            },
+                          )
+                      ],
+                    );
+                  }).toList(),
+                ),
                 Container(
                   width: double.infinity,
                   height: 1,
                   color: Colors.black,
                 ),
-            ],
-          );
-        },
-      ),
-      Container(
-        width: double.infinity,
-        height: 1,
-        color: Colors.black,
-      ),
-      SizedBox(height: 20),
+                SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {if (selectedDate != null &&
                       selectedTime != null &&
@@ -551,13 +645,13 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
                   }
                   },
                   child: Text('SALVAR',
-                  style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                ),
+                    backgroundColor: Colors.grey[300],
+                  ),
                 ),
                 SizedBox(height: 20),],
             )

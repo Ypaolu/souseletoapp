@@ -31,7 +31,7 @@ class _AnosConvocacoesState extends State<AnosConvocacoes> {
     'Novembro',
     'Dezembro'
   ];
-  final List<int> anos = [2024, 2023, 2022, 2021];
+  final List<int> anos = [2025, 2024, 2023, 2022];
   final Map<String, bool> _expandedMonths = {};
 
   @override
@@ -269,7 +269,7 @@ class _ListaConvocacoesState extends State<ListaConvocacoes> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => InfoConvocacao(
-                                  docId: documents[index].id, user: widget.user),
+                                  docId: documents[index].id, user: widget.user, SubTurno: widget.SubTurno),
                             ),
                           );
                         },

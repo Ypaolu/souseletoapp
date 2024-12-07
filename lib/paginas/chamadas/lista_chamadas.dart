@@ -30,7 +30,7 @@ class _AnosChamadasState extends State<AnosChamadas> {
     'Novembro',
     'Dezembro'
   ];
-  final List<int> anos = [2024, 2023, 2022, 2021];
+  final List<int> anos = [2025, 2024, 2023, 2022];
   final Map<String, bool> _expandedMonths = {};
 
   @override
@@ -195,8 +195,10 @@ class _ListaChamadasState extends State<ListaChamadas> {
   Widget build(BuildContext context) {
     // Definindo o intervalo de data para o mês e ano especificado
     DateTime startDate = DateTime(widget.year, widget.month, 1);
-    DateTime endDate =
-    (widget.month == 12) ? DateTime(widget.year + 1, 1, 1) : DateTime(widget.year, widget.month + 1, 1);
+    DateTime endDate = DateTime(
+      widget.year,
+      widget.month + 1,
+    ).subtract(Duration(seconds: 1));
 
 
     return Scaffold(

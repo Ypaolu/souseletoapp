@@ -238,16 +238,14 @@ class _Selecao_de_subState extends State<Selecao_de_sub> {
                               ),
                               TextButton(
                                 onPressed: () async {
-                                  final message = await AuthService()
-                                      .logout(); // Chama o logout
+                                  final message = await AuthService().logout(); // Chama o logout
 
                                   if (message != null &&
-                                      message
-                                          .contains('Logout bem-sucedido!')) {
-                                    Navigator.pushReplacement(
+                                      message.contains('Logout bem-sucedido!')) {
+                                    Navigator.pushAndRemoveUntil(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => Login()),
+                                          builder: (context) => Login()), (route) => false,
                                     );
                                   }
                                   ScaffoldMessenger.of(context).showSnackBar(

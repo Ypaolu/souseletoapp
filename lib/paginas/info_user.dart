@@ -73,11 +73,12 @@ class _InfoUserState extends State<InfoUser> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      SizedBox(height: 35),
                       Container(
                         child: Center(
                           child: Container(
                             width: 350,
-                            height: 500,
+                            height: 400,
                             decoration: BoxDecoration(
                               color: Colors.grey[300],
                               borderRadius: BorderRadius.circular(10),
@@ -341,6 +342,7 @@ class _InfoUserState extends State<InfoUser> {
                           ),
                         ),
                       ),
+                      SizedBox(height: 35),
                     ],
                   );
                 }

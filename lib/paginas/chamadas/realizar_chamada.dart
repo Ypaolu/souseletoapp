@@ -36,7 +36,7 @@ class _RealizarChamadaState extends State<RealizarChamada> {
         alunos = querySnapshot.docs.map((doc) {
           return {
             'NomeAluno': doc['NomeAluno'],
-            'Presente': true, // Por padrão, os alunos começam como "presente"
+            'Presente': 'Presente', // Por padrão, os alunos começam como "presente"
           };
         }).toList();
         alunosCarregados = true; // Alunos carregados com sucesso
@@ -67,7 +67,7 @@ class _RealizarChamadaState extends State<RealizarChamada> {
       }).toList();
 
       Map<String, dynamic> uploaddata = {
-        'NomeAluno': presencas,
+        'Alunos': presencas,
         'Sub': widget.SubTurno,
         'DataChamada': selectedDate != null
             ? Timestamp.fromDate(selectedDate!) // Salva como Timestamp
@@ -93,6 +93,7 @@ class _RealizarChamadaState extends State<RealizarChamada> {
       );
     }
   }
+
 
 
   // Função para selecionar a data
@@ -205,7 +206,7 @@ class _RealizarChamadaState extends State<RealizarChamada> {
                                 onTap: () {
                                   setState(() {
                                     aluno['Presente'] =
-                                    !aluno['Presente'];
+                                    aluno['Presente'] == 'Presente' ? 'Ausente' : 'Presente';
                                   });
                                 },
                                 child: Container(
@@ -219,9 +220,9 @@ class _RealizarChamadaState extends State<RealizarChamada> {
                                       ),
                                       borderRadius:
                                       BorderRadius.circular(5),
-                                      color: aluno['Presente']
-                                          ? Colors.transparent
-                                          : Colors.black),
+                                      color: aluno['Presente'] == 'Presente'
+                                          ? Colors.green
+                                          : Colors.red),
                                 ),
                               ),
                             ),

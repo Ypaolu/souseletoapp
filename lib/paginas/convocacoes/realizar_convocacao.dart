@@ -24,6 +24,11 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
   bool alunosCarregados = false;
   Map<String, bool> expandidos = {};
   List<String> selectedAlunos = [];
+  String formatTimestamp(Timestamp timestamp) {
+    final date = timestamp.toDate();
+    final formattedDate = DateFormat('dd/MM/yyyy').format(date);
+    return formattedDate;
+  }
 
   TextEditingController profRespcontroller = TextEditingController();
   TextEditingController taxacontroller = TextEditingController();
@@ -194,7 +199,6 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                 child: Text('NÃO HÁ ALUNOS CADASTRADOS PARA ESSE SUB'))
                 : Column(
               children: [
-                SizedBox(height: 10),
                 Text(
                   "INFORMAÇÕES DA CONVOCAÇÃO",
                   style: TextStyle(
@@ -411,14 +415,12 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                       ),
                     ),
                     SizedBox(height: 20),
-                    Container(
-                      child: Text('Alunos',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),),
-                    ),
+                    Text('Alunos',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),),
                     Container(
                       width: double.infinity,
                       height: 1,
@@ -426,17 +428,14 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                     ),
                     Column(
                       children: alunos.map((aluno) {
-                        String alunoID = aluno['ID'];
+                        String alunoNome = aluno['NomeAluno']; // Nome do aluno
                         return Column(
                           children: [
                             GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  expandidos[alunoID] =
-                                  !(expandidos[alunoID] ?? false);
-                                  if (expandidos[alunoID]!) {
-                                    // Carregar chamadas ao expandir
-                                  }
+                                  // Toggle the expanded state for the clicked student
+                                  expandidos[alunoNome] = !(expandidos[alunoNome] ?? false);
                                 });
                               },
                               child: Container(
@@ -444,16 +443,13 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                                 child: ListTile(
                                   title: Text(aluno['NomeAluno']),
                                   trailing: Checkbox(
-                                    value: selectedAlunos
-                                        .contains(aluno['ID']),
+                                    value: selectedAlunos.contains(aluno['ID']),
                                     onChanged: (bool? value) {
                                       setState(() {
                                         if (value == true) {
-                                          selectedAlunos
-                                              .add(aluno['ID']);
+                                          selectedAlunos.add(aluno['ID']);
                                         } else {
-                                          selectedAlunos
-                                              .remove(aluno['ID']);
+                                          selectedAlunos.remove(aluno['ID']);
                                         }
                                       });
                                     },
@@ -467,130 +463,100 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                               height: 1,
                               color: Colors.black,
                             ),
-                            if (expandidos[alunoID] == true)
-                              Container(
-                                color: Colors.grey[200],
-                                width: double.infinity,
-                                height: 200,
-                                child: Column(
-                                  crossAxisAlignment:
-                                  CrossAxisAlignment.start,
-                                  children: [
-                                    StreamBuilder<QuerySnapshot>(
-                                      stream: FirebaseFirestore
-                                          .instance
-                                          .collection('Chamadas')
-                                          .where('AlunosID',
-                                          isEqualTo: alunoID)
-                                          .orderBy('DataChamada')
-                                          .snapshots(),
-                                      builder: (context, snapshot) {
-                                        if (snapshot
-                                            .connectionState ==
-                                            ConnectionState.waiting) {
-                                          return Center(
-                                              child:
-                                              CircularProgressIndicator());
-                                        }
+                            if (expandidos[alunoNome] == true)
+                        FutureBuilder<QuerySnapshot>(
+                        future: FirebaseFirestore.instance
+                            .collection('Chamadas')
+                            .where('Sub', isEqualTo: widget.SubTurno)  // Filtra pelo SubTurno
+                            .orderBy('DataChamada', descending: true) // Ordena por data de chamada
+                            .limit(4) // Limita para as últimas 4 chamadas
+                            .get(),
+                        builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                        return Center(child: Text('Erro: ${snapshot.error}'));
+                        } else if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return Center(child: Text('Nenhuma chamada encontrada'));
+                        } else {
+                        return Container(
+                        width: double.infinity,
+                        height: 60,
+                        color: Colors.grey[200],
+                        child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: snapshot.data!.docs.map<Widget>((chamadaDoc) {
+                        var chamada = chamadaDoc.data() as Map<String, dynamic>;
+                        List<dynamic> alunosChamadas = chamada['Alunos'] ?? [];
 
-                                        if (snapshot.hasError) {
-                                          return Center(
-                                              child: Text(
-                                                  'Erro ao carregar dados: ${snapshot.error}'));
-                                        }
+                        // Encontrar o aluno dentro da lista de alunos da chamada
+                        var alunoPresente = alunosChamadas.firstWhere(
+                        (alunoChamado) => alunoChamado['NomeAluno'] == aluno['NomeAluno'],
+                        orElse: () => null,  // Retorna null se o aluno não for encontrado
+                        );
 
-                                        if (!snapshot.hasData ||
-                                            snapshot
-                                                .data!.docs.isEmpty) {
-                                          return Center(
-                                              child: Text(
-                                                  'Nenhuma chamada encontrada.'));
-                                        }
+                        // Se o aluno não estiver nessa chamada, não exibe nada
+                        if (alunoPresente == null) {
+                        return SizedBox();  // Retorna um widget vazio caso o aluno não esteja presente
+                        }
 
-                                        final documentos =
-                                            snapshot.data!.docs;
-                                        return ListView.builder(
-                                          itemCount:
-                                          documentos.length,
-                                          itemBuilder:
-                                              (context, index) {
-                                            var dadosDoc =
-                                            documentos[index]
-                                                .data()
-                                            as Map<String,
-                                                dynamic>;
-                                            var alunos = List<
-                                                Map<String,
-                                                    dynamic>>.from(
-                                                dadosDoc['Alunos']);
-                                            var dataChamada =
-                                            (dadosDoc['DataChamada']
-                                            as Timestamp)
-                                                .toDate();
-                                            return Column(
-                                              crossAxisAlignment:
-                                              CrossAxisAlignment
-                                                  .start,
-                                              children: [
-                                                // Presença e data
-                                                ListView.builder(
-                                                  shrinkWrap: true,
-                                                  itemCount:
-                                                  alunos.length,
-                                                  itemBuilder:
-                                                      (context,
-                                                      alunoIndex) {
-                                                    var aluno = alunos[
-                                                    alunoIndex];
-                                                    bool presente =
-                                                        aluno['Presente'] ??
-                                                            false;
-                                                    return ListTile(
-                                                      title: Text(aluno[
-                                                      'NomeAluno'] ??
-                                                          'Nome não disponível'),
-                                                      subtitle: Row(
-                                                        children: [
-                                                          Container(
-                                                            width: 20,
-                                                            height:
-                                                            20,
-                                                            decoration:
-                                                            BoxDecoration(
-                                                              color: presente
-                                                                  ? Colors.green
-                                                                  : Colors.red,
-                                                              borderRadius:
-                                                              BorderRadius.circular(5),
-                                                            ),
-                                                          ),
-                                                          SizedBox(width: 10),
-                                                          Text(
-                                                            'Data: ${DateFormat('dd/MM/yyyy HH:mm').format(dataChamada)}',
-                                                            style: TextStyle(
-                                                                fontSize:
-                                                                12,
-                                                                color:
-                                                                Colors.grey),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                          ],
+                        // Defina a cor de acordo com o status de presença
+                        Color statusColor;
+                        String statusTexto = alunoPresente['Presente'];
+
+                        if (statusTexto == 'Presente') {
+                        statusColor = Colors.green;  // Verde para presente
+                        } else if (statusTexto == 'Ausente') {
+                        statusColor = Colors.red;    // Vermelho para ausente
+                        } else if (statusTexto == 'Justificado') {
+                        statusColor = Colors.yellow; // Amarelo para justificado
+                        statusTexto = 'Justificado'; // Altere o texto para 'Justificado'
+                        } else {
+                        statusColor = Colors.grey;  // Cor padrão (caso nenhum valor seja definido)
+                        }
+
+                        // Exibe a data e presença do aluno
+                        return Row(
+                        children: [
+                        Column(
+                        children: [
+                        SizedBox(height: 10),
+                        Container(
+                        alignment: Alignment.center,
+                        width: 25,
+                        height: 25,
+                        decoration: BoxDecoration(
+                        border: Border.all(
+                        color: Colors.black,
+                        width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(5),
+                        color: statusColor, // Defina a cor baseada no status
+                        ),
+                        ),
+                        // Exibe a data da chamada formatada
+                        Text(
+                        '${formatTimestamp(chamada['DataChamada'])}',
+                        style: TextStyle(fontSize: 15),
+                        ),
+                        ],
+                        ),
+                        SizedBox(width: 15),
+                        ],
+                        );
+                        }).toList(),
+                        ),
+                        );
+                        }
+                        },
+                        )
+
+                        ],
                         );
                       }).toList(),
                     ),
+
+
                     SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () {
@@ -644,7 +610,7 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
         ),
       ),
       bottomNavigationBar: Container(
-        height: 80,
+        height: 60,
         child: BottomAppBar(
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -653,7 +619,11 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                icon: Icon(Icons.reply, color: Colors.black, size: 30),
+                icon: Icon(
+                  Icons.reply,
+                  color: Colors.black,
+                  size: 30,
+                ),
               ),
               IconButton(
                 onPressed: () {
@@ -664,7 +634,11 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                     ),
                   );
                 },
-                icon: Icon(Icons.home, color: Colors.black, size: 30),
+                icon: Icon(
+                  Icons.home,
+                  color: Colors.black,
+                  size: 30,
+                ),
               ),
               IconButton(
                 onPressed: () {
@@ -673,7 +647,11 @@ class _RealizarConvocacaoState extends State<RealizarConvocacao> {
                       MaterialPageRoute(
                           builder: (context) => InfoUser(user: widget.user)));
                 },
-                icon: Icon(Icons.person, color: Colors.black, size: 30),
+                icon: Icon(
+                  Icons.person,
+                  color: Colors.black,
+                  size: 30,
+                ),
               ),
             ],
           ),
