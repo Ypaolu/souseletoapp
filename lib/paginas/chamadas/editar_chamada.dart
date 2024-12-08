@@ -79,10 +79,12 @@ class _EditarChamadaState extends State<EditarChamada> {
     }
 
     try {
+      // Inclui as justificativas junto com os status de presença
       List<Map<String, dynamic>> presencas = alunos.map((aluno) {
         return {
           'NomeAluno': aluno['NomeAluno'],
           'Presente': aluno['Presente'],
+          'Justificativa': aluno['Justificativa'] ?? '', // Inclui justificativa, se existir
         };
       }).toList();
 
