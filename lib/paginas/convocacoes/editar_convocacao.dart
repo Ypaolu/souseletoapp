@@ -51,7 +51,12 @@ class _EditarConvocacaoState extends State<EditarConvocacao> {
 
   Future<void> carregarAlunos() async {
     try {
-      var alunosSnapshot = await FirebaseFirestore.instance.collection('Alunos').get();
+      var alunosSnapshot = await FirebaseFirestore.instance
+          .collection('Alunos')
+          .orderBy('NomeAluno', descending: false)
+          .where('Sub', isEqualTo: widget.SubTurno)
+
+          .get();
       var listaAlunos = alunosSnapshot.docs.map((doc) {
         return {
           'ID': doc.id,
