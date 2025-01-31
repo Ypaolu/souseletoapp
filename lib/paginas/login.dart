@@ -124,17 +124,6 @@ class _LoginState extends State<Login> {
                 child: Text('ENTRAR', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                    MaterialPageRoute(
-                      builder: (context) => AddUser()
-                    ));
-                  },
-                  child: Text('+')
-              ),
             ],
           ),
         ),
