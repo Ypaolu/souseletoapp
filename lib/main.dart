@@ -7,29 +7,47 @@ import 'configs/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializa o Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (BuildContext context, AsyncSnapshot snapshot){
-          if(snapshot.hasError){
-            return Text(snapshot.error.toString());
+
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(), // Ouvir mudanças no estado de autenticação
+        builder: (BuildContext context, AsyncSnapshot<User?> snapshot) {
+          // Verificar se há erro
+          if (snapshot.hasError) {
+            return Scaffold(
+              body: Center(child: Text('Erro: ${snapshot.error}')), // Exibe erro
+            );
           }
-          if(snapshot.connectionState==ConnectionState.active){
-            if(snapshot.data==null){
+
+          // Verificar se a conexão foi estabelecida
+          if (snapshot.connectionState == ConnectionState.active) {
+            // Se o usuário não estiver autenticado, vai para a tela de login
+            if (snapshot.data == null) {
               return Login();
             } else {
-              return Selecao_de_sub(user: snapshot.data!);
+              // Se o usuário estiver autenticado, vai para a tela de login
+              return Login();
             }
           }
 
-          return Center(child: CircularProgressIndicator());
-        }
-    ),
-  ));
+          // Enquanto o status de autenticação estiver carregando
+          return Center(child: CircularProgressIndicator()); // Indicador de carregamento
+        },
+      ),
+    );
+  }
 }
 
 // shift + alt + f (faz a identação do código)

@@ -241,7 +241,7 @@ class _RealizarChamadaState extends State<RealizarChamada> {
                     onPressed: () {
                       uploadData();
                       Navigator.pop(
-                          context); // Volta para a tela anterior
+                          context);
                     },
                     child: Text('SALVAR',
                         style: TextStyle(

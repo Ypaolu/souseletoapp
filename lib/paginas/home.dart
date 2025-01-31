@@ -11,6 +11,7 @@ import 'info_user.dart';
 import 'login.dart';
 
 class Selecao_de_sub extends StatefulWidget {
+
   final User user;
   Selecao_de_sub({super.key, required this.user});
 

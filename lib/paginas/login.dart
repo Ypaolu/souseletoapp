@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:souseleto/paginas/userPadrao.dart';
 import '../configs/auth.dart';
 import 'add_user.dart';
 import 'alunos/add_aluno.dart';
@@ -15,6 +18,13 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailcontroller = TextEditingController();
   final TextEditingController _senhacontroller = TextEditingController();
+  bool _obscureText = true;
+
+  void _toggleObscureText() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +87,19 @@ class _LoginState extends State<Login> {
               SizedBox(
                 width: 200,
                 child: TextField(
-                  obscureText: true,
                   controller: _senhacontroller,
+                  obscureText: _obscureText,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: 'DIGITE SUA SENHA',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureText
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: _toggleObscureText,
+                    ),
                   ),
                 ),
               ),
@@ -106,6 +124,17 @@ class _LoginState extends State<Login> {
                 child: Text('ENTRAR', style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                    MaterialPageRoute(
+                      builder: (context) => AddUser()
+                    ));
+                  },
+                  child: Text('+')
+              ),
             ],
           ),
         ),
@@ -113,25 +142,66 @@ class _LoginState extends State<Login> {
     );
   }
 
-  void _handleLoginScenario() {
-    if (_senhacontroller.text == 'mudarSenha@123') {
-      // Redireciona para a tela de alteração de senha
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => NovaSenha()),
-      );
-    } else {
-      // Caso contrário, navegue para a tela de seleção normal
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Selecao_de_sub(
-            user: FirebaseAuth.instance.currentUser!,
+  void _handleLoginScenario() async {
+    User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Buscar o documento do usuário pelo userId no Firestore
+      QuerySnapshot userQuery = await FirebaseFirestore.instance
+          .collection('Usuarios')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      if (userQuery.docs.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Usuário não encontrado no Firestore!')),
+        );
+        return;
+      }
+
+      // Pega o primeiro documento encontrado
+      DocumentSnapshot userDoc = userQuery.docs.first;
+
+      // Obtém o nível do usuário
+      String? nivel = userDoc['Nvl'];
+
+      if (nivel == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Nível do usuário não encontrado!')),
+        );
+        return;
+      }
+
+      // Se a senha for a padrão, redirecionar para alterar senha
+      if (_senhacontroller.text == 'mudarSenha@123') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => NovaSenha()),
+        );
+        return;
+      }
+
+      // Verificar o nível do usuário e redirecionar
+      if (nivel == 'Padrão') {
+        // Redirecionar para a página específica do usuário padrão
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => InfoUserPadrao(user: user),
           ),
-        ),
-      );
+        );
+      } else if (nivel == 'Master' || nivel == 'Professor'){
+        // Caso contrário, vai para a página de seleção de sub
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Selecao_de_sub(user: user),
+          ),
+        );
+      }
     }
   }
+
 }
 
 class NovaSenha extends StatefulWidget {
