@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:souseleto/paginas/userPadrao.dart';
 import '../configs/auth.dart';
 import 'add_user.dart';
@@ -12,18 +11,71 @@ class Login extends StatefulWidget {
   const Login({super.key});
 
   @override
-  _LoginState createState() => _LoginState();
+  State<Login> createState() => _LoginState();
 }
 
 class _LoginState extends State<Login> {
   final TextEditingController _emailcontroller = TextEditingController();
   final TextEditingController _senhacontroller = TextEditingController();
   bool _obscureText = true;
+  bool _isLoading = false;
 
   void _toggleObscureText() {
     setState(() {
       _obscureText = !_obscureText;
     });
+  }
+
+  void _showSnackbar(BuildContext context, String message) {
+    const Color darkGreen = Color(0xFF388E3C);
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: darkGreen,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  void _attemptLogin() async {
+    final email = _emailcontroller.text.trim();
+    final senha = _senhacontroller.text;
+
+    if (email.isEmpty && senha.isEmpty) {
+      _showSnackbar(context, 'Por favor, preencha o email e a senha.');
+      return;
+    }
+    if (email.isEmpty) {
+      _showSnackbar(context, 'Por favor, preencha o email.');
+      return;
+    }
+    if (senha.isEmpty) {
+      _showSnackbar(context, 'Por favor, preencha a senha.');
+      return;
+    }
+
+
+    setState(() { _isLoading = true; });
+
+    final message = await AuthService().login(
+      email: email,
+      senha: senha,
+    );
+
+    setState(() { _isLoading = false; });
+
+    if (message != null && message.contains('Successo')) {
+      _showSnackbar(context, 'Login realizado com sucesso!');
+      _handleLoginScenario();
+    } else {
+      _showSnackbar(context, 'Falha no Login: ${message ?? 'Erro desconhecido'}');
+    }
   }
 
   @override
@@ -105,24 +157,24 @@ class _LoginState extends State<Login> {
               ),
               SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () async {
-                  final message = await AuthService().login(
-                    email: _emailcontroller.text,
-                    senha: _senhacontroller.text,
-                  );
-
-                  if (message != null && message.contains('Successo')) {
-                    _handleLoginScenario();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(message ?? 'Erro ao realizar login'),
-                      ),
-                    );
-                  }
-                },
-                child: Text('ENTRAR', style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                onPressed: _isLoading ? null : _attemptLogin,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                ),
+                child: _isLoading
+                    ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 3,
+                  ),
+                )
+                    : const Text(
+                  'ENTRAR',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
               ),
             ],
           ),
@@ -142,9 +194,9 @@ class _LoginState extends State<Login> {
           .get();
 
       if (userQuery.docs.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuário não encontrado no Firestore!')),
-        );
+        _showSnackbar(context, 'Erro: Usuário não encontrado!');
+        // Se não encontrado no Firestore, faz logout forçado para evitar problemas de estado.
+        AuthService().logout();
         return;
       }
 
@@ -152,20 +204,19 @@ class _LoginState extends State<Login> {
       DocumentSnapshot userDoc = userQuery.docs.first;
 
       // Obtém o nível do usuário
-      String? nivel = userDoc['Nvl'];
+      String? nivel = userDoc['Nvl'] as String?;
 
       if (nivel == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Nível do usuário não encontrado!')),
-        );
+        _showSnackbar(context, 'Erro: Nível do usuário não encontrado! Verifique com o administrador.');
         return;
       }
 
       // Se a senha for a padrão, redirecionar para alterar senha
       if (_senhacontroller.text == 'mudarSenha@123') {
+        _showSnackbar(context, 'Redirecionando: Por favor, altere sua senha padrão.');
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => NovaSenha()),
+          MaterialPageRoute(builder: (context) => const NovaSenha()),
         );
         return;
       }
@@ -187,8 +238,17 @@ class _LoginState extends State<Login> {
             builder: (context) => Selecao_de_sub(user: user),
           ),
         );
+      } else {
+        _showSnackbar(context, 'Nível de acesso ($nivel) não reconhecido. Acesso negado.');
       }
     }
+  }
+
+  @override
+  void dispose() {
+    _emailcontroller.dispose();
+    _senhacontroller.dispose();
+    super.dispose();
   }
 
 }

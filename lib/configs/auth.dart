@@ -13,7 +13,7 @@ class AuthService {
       return 'Sucesso';
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
-        return 'Senha fraca.';
+        return 'Senha fraca. Escolha uma senha mais forte.';
       } else if (e.code == 'email-already-in-use') {
         return 'Já existe uma conta para esse email.';
       } else {
@@ -35,12 +35,16 @@ class AuthService {
       );
       return 'Successo!';
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return 'Nenhum usuário para esse email.';
-      } else if (e.code == 'wrong-password') {
-        return 'Senha incorreta.';
+      if (e.code == 'user-not-found' ||
+          e.code == 'wrong-password' ||
+          e.code == 'invalid-credential') {
+
+        return 'Credenciais inválidas. Verifique seu email e/ou senha.';
+
+      } else if (e.code == 'invalid-email') {
+        return 'O formato do email é inválido.';
       } else {
-        return e.message;
+        return e.message ?? 'Erro desconhecido durante o login.';
       }
     } catch (e) {
       return e.toString();
