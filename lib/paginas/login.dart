@@ -187,7 +187,6 @@ class _LoginState extends State<Login> {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // Buscar o documento do usuário pelo userId no Firestore
       QuerySnapshot userQuery = await FirebaseFirestore.instance
           .collection('Usuarios')
           .where('userId', isEqualTo: user.uid)
@@ -195,15 +194,12 @@ class _LoginState extends State<Login> {
 
       if (userQuery.docs.isEmpty) {
         _showSnackbar(context, 'Erro: Usuário não encontrado!');
-        // Se não encontrado no Firestore, faz logout forçado para evitar problemas de estado.
         AuthService().logout();
         return;
       }
 
-      // Pega o primeiro documento encontrado
       DocumentSnapshot userDoc = userQuery.docs.first;
 
-      // Obtém o nível do usuário
       String? nivel = userDoc['Nvl'] as String?;
 
       if (nivel == null) {
@@ -211,7 +207,6 @@ class _LoginState extends State<Login> {
         return;
       }
 
-      // Se a senha for a padrão, redirecionar para alterar senha
       if (_senhacontroller.text == 'mudarSenha@123') {
         _showSnackbar(context, 'Redirecionando: Por favor, altere sua senha padrão.');
         Navigator.push(
@@ -221,9 +216,7 @@ class _LoginState extends State<Login> {
         return;
       }
 
-      // Verificar o nível do usuário e redirecionar
       if (nivel == 'Padrão') {
-        // Redirecionar para a página específica do usuário padrão
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -231,7 +224,6 @@ class _LoginState extends State<Login> {
           ),
         );
       } else if (nivel == 'Master' || nivel == 'Professor'){
-        // Caso contrário, vai para a página de seleção de sub
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
