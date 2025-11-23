@@ -203,7 +203,7 @@ class _LoginState extends State<Login> {
       String? nivel = userDoc['Nvl'] as String?;
 
       if (nivel == null) {
-        _showSnackbar(context, 'Erro: Nível do usuário não encontrado! Verifique com o administrador.');
+        _showSnackbar(context, 'Erro: Nível do usuário não encontrado! Verifique com seu administrador.');
         return;
       }
 

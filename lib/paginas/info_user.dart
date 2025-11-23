@@ -26,6 +26,42 @@ double _grausParaRadianos(double graus) {
   return graus * (pi / 180);
 }
 
+// Função para gerar um id aleatório para os pontos, onde verifica se já existe o id para não ter repetidos
+Future<String> gerarIdUnico() async {
+  const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numeros = '0123456789';
+  final random = Random();
+  final firestore = FirebaseFirestore.instance;
+
+  String gerarCodigo() {
+    // Gera 6 letras
+    List<String> chars = List.generate(6, (_) => letras[random.nextInt(letras.length)]);
+    // Gera 6 números
+    chars.addAll(List.generate(6, (_) => numeros[random.nextInt(numeros.length)]));
+    // Embaralhar
+    chars.shuffle(random);
+    return chars.join();
+  }
+
+  String id;
+  bool existe;
+
+  do {
+    id = gerarCodigo();
+
+    final query = await firestore
+        .collection('Pontos')
+        .where('Id', isEqualTo: id)
+        .limit(1)
+        .get();
+
+    existe = query.docs.isNotEmpty;
+
+  } while (existe);
+
+  return id;
+}
+
 const double LATITUDE_PRE_DEFINIDA = -26.477644906456536; // Exemplo de latitude (São Paulo)
 const double LONGITUDE_PRE_DEFINIDA = -49.00183806709477; // Exemplo de longitude (São Paulo)
 TextEditingController _localizacaoController = TextEditingController();
@@ -114,7 +150,7 @@ class _InfoUserState extends State<InfoUser> {
       throw 'Permissão negada permanentemente.';
     }
 
-    // Obter a posição atual
+    // Obtém a posição atual
     Position posicao = await Geolocator.getCurrentPosition();
     return posicao;
   }
@@ -252,10 +288,6 @@ class _InfoUserState extends State<InfoUser> {
                                       mainAxisAlignment:
                                       MainAxisAlignment.center,
                                       children: [
-                                        /* Icon(Icons.),
-                                            SizedBox(
-                                              width: 10,
-                                            ),*/
                                         Text('CPF'),
                                       ],
                                     ),
@@ -402,7 +434,8 @@ class _InfoUserState extends State<InfoUser> {
                                                                 .showSnackBar(
                                                               SnackBar(
                                                                   content: Text(
-                                                                      'Senha atualizada com sucesso!')),
+                                                                      'Senha atualizada com sucesso!'
+                                                                  )),
                                                             );
                                                             Navigator.of(context).pop();
                                                           }
@@ -412,7 +445,8 @@ class _InfoUserState extends State<InfoUser> {
                                                               .showSnackBar(
                                                             SnackBar(
                                                                 content: Text(
-                                                                    'Erro ao atualizar a senha: $e')),
+                                                                    'Erro ao atualizar a senha: $e'
+                                                                )),
                                                           );
                                                         }
                                                       } else {
@@ -421,7 +455,8 @@ class _InfoUserState extends State<InfoUser> {
                                                             .showSnackBar(
                                                           SnackBar(
                                                               content: Text(
-                                                                  'As senhas não coincidem')),
+                                                                  'As senhas não coincidem'
+                                                              )),
                                                         );
                                                       }
                                                     },
@@ -451,6 +486,9 @@ class _InfoUserState extends State<InfoUser> {
                         children: [
                           GestureDetector(
                             onTap: () async {
+
+                              final idGerado = await gerarIdUnico();
+
                               try {
                                 Position posicao = await posicaoAtual(context);
                                 double distancia = calcularDistancia(
@@ -497,6 +535,7 @@ class _InfoUserState extends State<InfoUser> {
                                                   'longitude': posicao.longitude,
                                                   'Onde': localizacaoAtual,
                                                   'Justificativa': justificativa,
+                                                  'Id': idGerado
                                                 },
                                               },
                                             }, SetOptions(merge: true));
@@ -522,6 +561,7 @@ class _InfoUserState extends State<InfoUser> {
                                       horario: {
                                         'latitude': posicao.latitude,
                                         'longitude': posicao.longitude,
+                                        'Id': idGerado
                                       },
                                     },
                                   }, SetOptions(merge: true));
